@@ -551,7 +551,7 @@ const ITEMS = [
 
 // ── SHELVES ──────────────────────────────────────────────────────────
 const SHELVES = [
-  {id:'s0',label:'🎂 Cakes'},{id:'s1',label:'🧁 Cupcakes'},
+  {id:'s0',label:'🎂 Cakes & Cupcakes'},{id:'s1',label:'🍓 Fruit'},
   {id:'s2',label:'🍩 Donuts'},{id:'s3',label:'🥐 Pastries'},
   {id:'s4',label:'🍦 Ice Cream'},{id:'s5',label:'🍬 Sweets'},
   {id:'s6',label:'🥤 Drinks'},{id:'s7',label:'🍪 Cookies'},
@@ -653,9 +653,14 @@ function buildTray() {
       div.style.borderColor = '#f9c74f';
     });
     div.addEventListener('dragstart', e => {
-      selectedItemId = item.id;
+      // Always use this item's id, not selectedItemId, to avoid stale state
       dragData = {itemId: item.id};
       e.dataTransfer.effectAllowed = 'copy';
+      e.dataTransfer.setData('text/plain', item.id);
+    });
+    div.addEventListener('dragend', () => {
+      // Clean up in case drop didn't fire
+      dragData = null;
     });
     div.addEventListener('touchstart', touchStart, {passive: true});
     tray.appendChild(div);
@@ -704,7 +709,13 @@ function buildShelves() {
       const br = document.createElement('div'); br.className = 'shelf-bracket r'; board.appendChild(br);
       board.addEventListener('dragover', e => { e.preventDefault(); board.classList.add('drag-over'); });
       board.addEventListener('dragleave', () => board.classList.remove('drag-over'));
-      board.addEventListener('drop', e => { e.preventDefault(); board.classList.remove('drag-over'); dropOn(board); });
+      board.addEventListener('drop', e => {
+        e.preventDefault();
+        board.classList.remove('drag-over');
+        const itemId = (dragData && dragData.itemId) || e.dataTransfer.getData('text/plain');
+        if (itemId) placeItem(board, itemId);
+        dragData = null;
+      });
       col.appendChild(board); grid.appendChild(col);
     });
   });
