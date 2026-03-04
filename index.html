@@ -1,82 +1,4 @@
-const room=document.getElementById('shopRoom'); room.style.filter='brightness(1.35)'; setTimeout(()=>room.style.filter='',500);
-}
-
-// ── AUTO SCROLL ON DRAG ───────────────────────────────────────────────
-let autoScrollInterval = null;
-
-function startAutoScroll(clientY) {
-  stopAutoScroll();
-  const ZONE = 120; // px from top/bottom edge to trigger scroll
-  const MAX_SPEED = 18;
-  autoScrollInterval = setInterval(() => {
-    const fromTop = clientY;
-    const fromBottom = window.innerHeight - clientY;
-    if (fromTop < ZONE) {
-      const speed = Math.round(MAX_SPEED * (1 - fromTop / ZONE));
-      window.scrollBy(0, -speed);
-    } else if (fromBottom < ZONE) {
-      const speed = Math.round(MAX_SPEED * (1 - fromBottom / ZONE));
-      window.scrollBy(0, speed);
-    }
-  }, 16);
-}
-
-function stopAutoScroll() {
-  if (autoScrollInterval) { clearInterval(autoScrollInterval); autoScrollInterval = null; }
-}
-
-// Hook into native drag events on the document
-document.addEventListener('dragover', e => { startAutoScroll(e.clientY); });
-document.addEventListener('dragend',  () => stopAutoScroll());
-document.addEventListener('drop',     () => stopAutoScroll());
-
-
-let tData=null,tClone=null;
-function touchStart(e) {
-  const src=e.currentTarget;
-  tData={itemId:src.dataset.itemid};
-  selectedItemId=src.dataset.itemid;
-  tClone=src.cloneNode(true);
-  Object.assign(tClone.style,{position:'fixed',zIndex:'9999',opacity:'0.9',pointerEvents:'none',transform:'scale(1.1)',width:'80px'});
-  document.body.appendChild(tClone); moveTClone(e.touches[0]);
-  document.addEventListener('touchmove',touchMove,{passive:false});
-  document.addEventListener('touchend',touchEnd,{once:true});
-}
-function touchMove(e) {
-  e.preventDefault();
-  const t = e.touches[0];
-  moveTClone(t);
-  startAutoScroll(t.clientY);
-  document.querySelectorAll('.shelf-board').forEach(s=>{
-    const r=s.getBoundingClientRect();
-    if(t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom) s.classList.add('drag-over');
-    else s.classList.remove('drag-over');
-  });
-}
-function moveTClone(t){if(tClone){tClone.style.left=(t.clientX-40)+'px';tClone.style.top=(t.clientY-44)+'px';}}
-function touchEnd(e) {
-  document.removeEventListener('touchmove',touchMove);
-  stopAutoScroll();
-  if(tClone){tClone.remove();tClone=null;}
-  if(!tData)return;
-  const t=e.changedTouches[0];
-  document.querySelectorAll('.shelf-board').forEach(s=>{
-    s.classList.remove('drag-over');
-    const r=s.getBoundingClientRect();
-    if(t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom) placeItem(s,tData.itemId);
-  });
-  tData=null;
-}
-
-// ── INIT ─────────────────────────────────────────────────────────────
-buildShelves();
-buildTray();
-buildPartTabs(selectedItemId);
-buildSwatches();
-refreshPreview();
-</script>
-</body>
-</html><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -861,6 +783,79 @@ function celebrate() {
   const room=document.getElementById('shopRoom'); room.style.filter='brightness(1.35)'; setTimeout(()=>room.style.filter='',500);
 }
 
-// ── TOUCH DRAG ───────────────────────────────────────────────────────
+// ── AUTO SCROLL ON DRAG ───────────────────────────────────────────────
+let autoScrollInterval = null;
+
+function startAutoScroll(clientY) {
+  stopAutoScroll();
+  const ZONE = 120; // px from top/bottom edge to trigger scroll
+  const MAX_SPEED = 18;
+  autoScrollInterval = setInterval(() => {
+    const fromTop = clientY;
+    const fromBottom = window.innerHeight - clientY;
+    if (fromTop < ZONE) {
+      const speed = Math.round(MAX_SPEED * (1 - fromTop / ZONE));
+      window.scrollBy(0, -speed);
+    } else if (fromBottom < ZONE) {
+      const speed = Math.round(MAX_SPEED * (1 - fromBottom / ZONE));
+      window.scrollBy(0, speed);
+    }
+  }, 16);
+}
+
+function stopAutoScroll() {
+  if (autoScrollInterval) { clearInterval(autoScrollInterval); autoScrollInterval = null; }
+}
+
+// Hook into native drag events on the document
+document.addEventListener('dragover', e => { startAutoScroll(e.clientY); });
+document.addEventListener('dragend',  () => stopAutoScroll());
+document.addEventListener('drop',     () => stopAutoScroll());
+
+
 let tData=null,tClone=null;
 function touchStart(e) {
+  const src=e.currentTarget;
+  tData={itemId:src.dataset.itemid};
+  selectedItemId=src.dataset.itemid;
+  tClone=src.cloneNode(true);
+  Object.assign(tClone.style,{position:'fixed',zIndex:'9999',opacity:'0.9',pointerEvents:'none',transform:'scale(1.1)',width:'80px'});
+  document.body.appendChild(tClone); moveTClone(e.touches[0]);
+  document.addEventListener('touchmove',touchMove,{passive:false});
+  document.addEventListener('touchend',touchEnd,{once:true});
+}
+function touchMove(e) {
+  e.preventDefault();
+  const t = e.touches[0];
+  moveTClone(t);
+  startAutoScroll(t.clientY);
+  document.querySelectorAll('.shelf-board').forEach(s=>{
+    const r=s.getBoundingClientRect();
+    if(t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom) s.classList.add('drag-over');
+    else s.classList.remove('drag-over');
+  });
+}
+function moveTClone(t){if(tClone){tClone.style.left=(t.clientX-40)+'px';tClone.style.top=(t.clientY-44)+'px';}}
+function touchEnd(e) {
+  document.removeEventListener('touchmove',touchMove);
+  stopAutoScroll();
+  if(tClone){tClone.remove();tClone=null;}
+  if(!tData)return;
+  const t=e.changedTouches[0];
+  document.querySelectorAll('.shelf-board').forEach(s=>{
+    s.classList.remove('drag-over');
+    const r=s.getBoundingClientRect();
+    if(t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom) placeItem(s,tData.itemId);
+  });
+  tData=null;
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────
+buildShelves();
+buildTray();
+buildPartTabs(selectedItemId);
+buildSwatches();
+refreshPreview();
+</script>
+</body>
+</html>
