@@ -278,6 +278,572 @@ body {
 @keyframes popIn{from{transform:scale(0) translateY(18px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
 .placed-item:hover{transform:translateY(-5px);transition:transform 0.15s;}
 .placed-item .pe{font-size:clamp(1.8rem,3.5vw,2.4rem);line-height:1;filter:drop-shadow(0 3px 5px rgba(0,0,0,0.22));}
+
+.placed-item .prm{
+  position:absolute;top:-7px;right:-7px;
+  background:#7f1d1d;color:white;border:none;border-radius:50%;
+  width:16px;height:16px;font-size:0.58rem;cursor:pointer;
+  display:none;align-items:center;justify-content:center;font-weight:900;
+  box-shadow:0 2px 4px rgba(0,0,0,0.3);z-index:10;
+}
+.placed-item:hover .prm{display:flex;}
+
+/* FLOOR */
+#floor {
+  height:56px;
+  background:
+    repeating-linear-gradient(90deg,rgba(190,24,93,0.25) 0,rgba(190,24,93,0.25) 1px,transparent 1px,transparent 40px),
+    repeating-linear-gradient(rgba(190,24,93,0.18) 0,rgba(190,24,93,0.18) 1px,transparent 1px,transparent 40px),
+    linear-gradient(180deg,#fce7f3 0%,#f5c6de 100%);
+  background-size:40px 40px, 40px 40px, 100% 100%;
+  border-top:6px solid #be185d;
+  border-left:10px solid #c26b8a; border-right:10px solid #c26b8a;
+}
+
+/* TRAY */
+#trayArea{
+  background:linear-gradient(180deg,#1a0510 0%,#2d0a1e 100%);
+  border-top:4px solid #f9c74f;
+  padding:12px 16px 18px;
+}
+#trayTitle{
+  font-family:'Pacifico',cursive;
+  color:#f9c74f;font-size:0.92rem;text-align:center;margin-bottom:10px;
+  text-shadow:0 0 10px rgba(249,199,79,0.45);
+}
+#itemTray{
+  display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+  max-height:155px;overflow-y:auto;padding:4px;
+}
+#itemTray::-webkit-scrollbar{width:4px;height:4px}
+#itemTray::-webkit-scrollbar-thumb{background:#f472b6;border-radius:4px}
+.tray-item{
+  display:flex;flex-direction:column;align-items:center;
+  background:rgba(255,255,255,0.07);
+  border:2px solid rgba(249,168,212,0.28);
+  border-radius:13px;padding:7px 9px 5px;cursor:grab;
+  transition:transform 0.15s,border-color 0.15s,background 0.15s;
+  user-select:none;min-width:56px;
+}
+.tray-item:hover{transform:translateY(-7px) scale(1.12);border-color:#f472b6;background:rgba(244,114,182,0.18);}
+.tray-item:active{cursor:grabbing;}
+.tray-item .te{font-size:1.9rem;line-height:1;}
+.tray-item .tn{font-size:0.58rem;font-weight:800;color:#f9a8d4;margin-top:3px;text-align:center;}
+
+
+
+/* CONFETTI */
+.cfetti{position:fixed;top:-20px;pointer-events:none;z-index:9999;animation:cfall linear forwards;border-radius:2px;}
+@keyframes cfall{to{transform:translateY(105vh) rotate(700deg);opacity:0}}
+
+@media(max-width:580px){
+  #shelfUnit{left:6px;right:6px;}
+  .shelf-board{min-height:70px;padding:5px 10px 12px;gap:5px;}
+  #window{width:80px;height:70px;right:18px;}
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <h1>👑 Princess Bake Shop</h1>
+  <input id="shopNameInput" type="text" placeholder="Name your shop…" maxlength="28">
+  <div class="topbar-btns">
+    <button class="tbtn tbtn-gold" onclick="celebrate()">🎉 Grand Opening!</button>
+    <button class="tbtn tbtn-clear" onclick="clearAll()">🧹 Clear</button>
+  </div>
+</div>
+
+<div id="scene">
+  <div id="shopRoom">
+
+    <!-- Room sparkles -->
+    <span class="rsparkle" style="left:7%;top:38%;animation-duration:3.2s;animation-delay:0s">✨</span>
+    <span class="rsparkle" style="left:88%;top:42%;animation-duration:2.8s;animation-delay:0.7s">🌸</span>
+    <span class="rsparkle" style="left:52%;top:18%;animation-duration:3.6s;animation-delay:1.1s">💖</span>
+
+    <!-- Window -->
+    <div id="window">
+      <div class="wsill"></div>
+      <span class="wflower">🌷</span>
+      <span class="wflower">🌸</span>
+      <span class="wflower">🌺</span>
+    </div>
+
+    <!-- Open/Closed sign -->
+    <div id="openSign" onclick="toggleOpen(this)">CLOSED</div>
+
+    <!-- Hanging shop sign -->
+    <div id="shopSign">
+      <div class="signchain"></div>
+      <input type="text" id="signInput" placeholder="Today's Special! 🍰" maxlength="26">
+    </div>
+
+    <!-- Shelf unit with pillar sides -->
+    <div id="shelfUnit">
+      <div class="shelf-pillar-l"></div>
+      <div class="shelf-pillar-r"></div>
+    </div>
+
+  </div>
+
+  <div id="floor"></div>
+
+  <!-- ITEM TRAY -->
+  <div id="trayArea">
+    <div id="trayTitle">🍩 Drag your treats onto the shelves! ✨</div>
+    <div id="itemTray"></div>
+
+  </div>
+</div>
+
+<script>
+const ITEMS = [
+  {e:'🍩',n:'Donut'},{e:'🧁',n:'Cupcake'},{e:'🎂',n:'B-Day Cake'},
+  {e:'🍰',n:'Cake Slice'},{e:'🍦',n:'Soft Serve'},{e:'🍧',n:'Sundae'},
+  {e:'🍫',n:'Chocolate'},{e:'🍓',n:'Strawberry'},{e:'🍒',n:'Cherry'},
+  {e:'🧇',n:'Waffle'},{e:'🥐',n:'Croissant'},{e:'🍪',n:'Cookie'},
+  {e:'🥧',n:'Pie'},{e:'🍭',n:'Lollipop'},{e:'🍬',n:'Candy'},
+  {e:'🍮',n:'Pudding'},{e:'🥛',n:'Milk'},{e:'☕',n:'Hot Cocoa'},
+  {e:'🧃',n:'Juice'},{e:'🫖',n:'Tea'},{e:'🥤',n:'Milkshake'},
+  {e:'🍋',n:'Lemonade'},{e:'🥨',n:'Pretzel'},{e:'🍞',n:'Bread'},
+  {e:'🍡',n:'Mochi'},{e:'🍥',n:'Swirl Cake'},{e:'🌸',n:'Blossom'},
+  {e:'⭐',n:'Star Cookie'},{e:'🎀',n:'Ribbon Cake'},
+];
+
+const SHELVES = [
+  {id:'s0',label:'🎂 Cakes & Cupcakes'},
+  {id:'s1',label:'🍩 Donuts & Pastries'},
+  {id:'s2',label:'🍦 Frozen & Sweets'},
+  {id:'s3',label:'🥤 Drinks & Treats'},
+];
+
+let dragData = null;
+
+function buildShelves() {
+  const unit = document.getElementById('shelfUnit');
+  // insert before pillars
+  const pillarL = unit.querySelector('.shelf-pillar-l');
+  const pillarR = unit.querySelector('.shelf-pillar-r');
+
+  [...SHELVES].reverse().forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'shelf-row';
+
+    const back = document.createElement('div');
+    back.className = 'shelf-back';
+    row.appendChild(back);
+
+    const board = document.createElement('div');
+    board.className = 'shelf-board';
+    board.id = s.id;
+    board.dataset.hint = '← drop treats here →';
+
+    const tag = document.createElement('div');
+    tag.className = 'shelf-tag';
+    tag.textContent = s.label;
+    board.appendChild(tag);
+
+    const bl = document.createElement('div'); bl.className='shelf-bracket l';
+    const br = document.createElement('div'); br.className='shelf-bracket r';
+    board.appendChild(bl); board.appendChild(br);
+
+    board.addEventListener('dragover', e=>{e.preventDefault();board.classList.add('drag-over');});
+    board.addEventListener('dragleave', ()=>board.classList.remove('drag-over'));
+    board.addEventListener('drop', e=>{e.preventDefault();board.classList.remove('drag-over');dropOn(board);});
+
+    row.appendChild(board);
+    unit.insertBefore(row, pillarL);
+  });
+}
+
+function buildTray() {
+  const tray = document.getElementById('itemTray');
+  ITEMS.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'tray-item';
+    div.draggable = true;
+    div.innerHTML = `<span class="te">${item.e}</span><span class="tn">${item.n}</span>`;
+    div.dataset.emoji = item.e;
+    div.dataset.name = item.n;
+    div.addEventListener('dragstart', e=>{
+      dragData = {emoji:item.e, name:item.n};
+      e.dataTransfer.effectAllowed='copy';
+    });
+    div.addEventListener('touchstart', touchStart, {passive:true});
+    tray.appendChild(div);
+  });
+}
+
+
+function dropOn(shelf) {
+  if (!dragData) return;
+  placeItem(shelf, dragData.emoji, dragData.name);
+  dragData = null;
+}
+
+function placeItem(shelf, emoji, name) {
+  shelf.classList.add('has-items');
+  const item = document.createElement('div');
+  item.className = 'placed-item';
+  item.innerHTML = `<span class="pe">${emoji}</span><button class="prm" onclick="removeItem(this)">✕</button>`;
+  shelf.appendChild(item);
+}
+
+function removeItem(btn) {
+  const item = btn.parentElement;
+  const shelf = item.parentElement;
+  item.style.cssText += 'transform:scale(0);opacity:0;transition:all 0.2s;';
+  setTimeout(()=>{
+    item.remove();
+    if(!shelf.querySelectorAll('.placed-item').length) shelf.classList.remove('has-items');
+  },200);
+}
+
+function toggleOpen(el) {
+  el.classList.toggle('open');
+  el.textContent = el.classList.contains('open') ? 'OPEN 🟢' : 'CLOSED';
+}
+
+function clearAll() {
+  if(!confirm('Clear all treats from the shelves? 🧹')) return;
+  document.querySelectorAll('.placed-item').forEach(e=>e.remove());
+  document.querySelectorAll('.shelf-board').forEach(s=>s.classList.remove('has-items'));
+}
+
+function celebrate() {
+  const colors=['#f472b6','#c084fc','#f9c74f','#34d399','#60a5fa','#fb923c','#f43f5e'];
+  for(let i=0;i<90;i++){
+    const p=document.createElement('div');
+    p.className='cfetti';
+    p.style.cssText=`left:${Math.random()*100}vw;background:${colors[Math.floor(Math.random()*colors.length)]};animation-duration:${2+Math.random()*2.5}s;animation-delay:${Math.random()*2}s;width:${7+Math.random()*9}px;height:${7+Math.random()*9}px;border-radius:${Math.random()>.5?'50%':'3px'};`;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),5500);
+  }
+  const room=document.getElementById('shopRoom');
+  room.style.filter='brightness(1.35)';
+  setTimeout(()=>room.style.filter='',500);
+}
+
+// Touch drag
+let tData=null, tClone=null;
+function touchStart(e){
+  const src=e.currentTarget;
+  tData={emoji:src.dataset.emoji,name:src.dataset.name};
+  tClone=src.cloneNode(true);
+  Object.assign(tClone.style,{position:'fixed',zIndex:'9999',opacity:'0.9',pointerEvents:'none',transform:'scale(1.2)'});
+  document.body.appendChild(tClone);
+  moveTClone(e.touches[0]);
+  document.addEventListener('touchmove',touchMove,{passive:false});
+  document.addEventListener('touchend',touchEnd,{once:true});
+}
+function touchMove(e){
+  e.preventDefault();
+  moveTClone(e.touches[0]);
+  document.querySelectorAll('.shelf-board').forEach(s=>{
+    const r=s.getBoundingClientRect(),t=e.touches[0];
+    if(t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom) s.classList.add('drag-over');
+    else s.classList.remove('drag-over');
+  });
+}
+function moveTClone(t){if(tClone){tClone.style.left=(t.clientX-32)+'px';tClone.style.top=(t.clientY-44)+'px';}}
+function touchEnd(e){
+  document.removeEventListener('touchmove',touchMove);
+  if(tClone){tClone.remove();tClone=null;}
+  if(!tData)return;
+  const t=e.changedTouches[0];
+  document.querySelectorAll('.shelf-board').forEach(s=>{
+    s.classList.remove('drag-over');
+    const r=s.getBoundingClientRect();
+    if(t.clientX>=r.left&&t.clientX<=r.right&&t.clientY>=r.top&&t.clientY<=r.bottom) placeItem(s,tData.emoji,tData.name);
+  });
+  tData=null;
+}
+
+buildShelves();
+buildTray();
+</script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>👑 My Princess Bake Shop</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Nunito', sans-serif;
+  background: #2d0a1e;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* TOP BAR */
+#topbar {
+  background: linear-gradient(90deg, #6b0f3a 0%, #9d1458 50%, #6b0f3a 100%);
+  border-bottom: 4px solid #f9c74f;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  position: relative;
+  z-index: 100;
+}
+#topbar h1 {
+  font-family: 'Pacifico', cursive;
+  color: #f9c74f;
+  font-size: clamp(1.1rem, 3vw, 1.9rem);
+  text-shadow: 2px 2px 0 #6b0f3a;
+  white-space: nowrap;
+}
+#shopNameInput {
+  font-family: 'Pacifico', cursive;
+  font-size: clamp(0.85rem, 2vw, 1.2rem);
+  background: rgba(255,255,255,0.12);
+  border: 2px dashed #f9a8d4;
+  border-radius: 30px;
+  color: #fff;
+  padding: 4px 16px;
+  outline: none;
+  text-align: center;
+  width: clamp(140px, 28vw, 260px);
+}
+#shopNameInput::placeholder { color: #f9a8d4; opacity: 0.7; }
+.topbar-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.tbtn {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 0.78rem;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.tbtn:hover { transform: scale(1.07); }
+.tbtn-gold { background: linear-gradient(135deg,#f9c74f,#fbbf24); color: #7c2d12; }
+.tbtn-clear { background: rgba(255,255,255,0.15); color: #fff; border: 1.5px solid rgba(255,255,255,0.3); }
+
+/* SCENE */
+#scene {
+  display: flex;
+  flex-direction: column;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* SHOP ROOM */
+#shopRoom {
+  position: relative;
+  min-height: 460px;
+  overflow: hidden;
+  /* pink wallpaper with polka dots */
+  background:
+    radial-gradient(circle, rgba(249,168,212,0.22) 3px, transparent 3px),
+    linear-gradient(180deg, #fce4f0 0%, #f9d0e7 70%, #e8b8d4 100%);
+  background-size: 30px 30px, 100% 100%;
+  border-left: 10px solid #c26b8a;
+  border-right: 10px solid #c26b8a;
+}
+
+/* ceiling stripe */
+#shopRoom::before {
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;
+  height:20px;
+  background: repeating-linear-gradient(90deg,#f472b6 0,#f472b6 20px,#fce7f3 20px,#fce7f3 40px);
+  border-bottom: 3px solid #be185d;
+  z-index:10;
+}
+
+/* WINDOW */
+#window {
+  position: absolute;
+  top: 36px; right: 50px;
+  width: 108px; height: 96px;
+  background: linear-gradient(135deg,#bae6fd 0%,#e0f2fe 50%,#fef9c3 100%);
+  border: 5px solid #9d174d;
+  border-radius: 50% 50% 5px 5px;
+  box-shadow: inset 0 0 18px rgba(186,230,253,0.4), 0 4px 14px rgba(0,0,0,0.18);
+  overflow: visible;
+  z-index: 5;
+}
+#window::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(transparent 46%,#9d174d 46%,#9d174d 54%,transparent 54%),
+    linear-gradient(90deg,transparent 46%,#9d174d 46%,#9d174d 54%,transparent 54%);
+}
+#window::after { content:'☀️'; position:absolute; top:10px; right:14px; font-size:1.3rem; animation:sunP 4s ease-in-out infinite; }
+@keyframes sunP{0%,100%{opacity:1}50%{opacity:0.55}}
+.wsill { position:absolute; bottom:-10px; left:-8px; right:-8px; height:11px; background:#9d174d; border-radius:3px; }
+.wflower { position:absolute; bottom:2px; font-size:1rem; animation:fsway 3s ease-in-out infinite alternate; }
+.wflower:nth-child(3){left:8px;animation-delay:0s}
+.wflower:nth-child(4){left:34px;animation-delay:0.4s}
+.wflower:nth-child(5){right:8px;animation-delay:0.8s}
+@keyframes fsway{from{transform:rotate(-6deg)}to{transform:rotate(6deg)}}
+
+/* SHOP SIGN */
+#shopSign {
+  position:absolute;
+  top:32px; left:50%; transform:translateX(-50%);
+  background: linear-gradient(135deg,#f9c74f,#fbbf24);
+  border: 4px solid #92400e;
+  border-radius: 14px;
+  padding: 7px 26px;
+  box-shadow: 0 4px 14px rgba(146,64,14,0.28), inset 0 1px 0 rgba(255,255,255,0.45);
+  z-index: 20; white-space:nowrap;
+}
+#shopSign::before, #shopSign::after { content:'🌟'; font-size:1rem; position:absolute; top:50%; transform:translateY(-50%); }
+#shopSign::before{left:7px} #shopSign::after{right:7px}
+.signchain {
+  position:absolute; top:-15px; left:22px; right:22px; height:15px;
+  border-top:3px solid #92400e; border-left:3px solid #92400e; border-right:3px solid #92400e;
+  border-radius:6px 6px 0 0;
+}
+#signInput {
+  font-family:'Pacifico',cursive;
+  font-size:clamp(0.8rem,2.2vw,1.25rem);
+  color:#7c2d12; background:transparent; border:none; outline:none;
+  text-align:center; width:clamp(110px,20vw,210px);
+  text-shadow:1px 1px 0 rgba(255,255,255,0.35);
+}
+
+/* OPEN/CLOSED */
+#openSign {
+  position:absolute; top:36px; left:28px;
+  background:#dc2626; color:#fff;
+  font-family:'Pacifico',cursive; font-size:0.78rem;
+  padding:5px 11px; border-radius:8px; border:2.5px solid #7f1d1d;
+  box-shadow:0 3px 8px rgba(0,0,0,0.3);
+  z-index:20; cursor:pointer; user-select:none;
+}
+#openSign.open{background:#16a34a;border-color:#14532d;}
+
+/* ROOM SPARKLES */
+.rsparkle {
+  position:absolute; pointer-events:none; font-size:1rem;
+  animation:rsp ease-in-out infinite; opacity:0.45; z-index:3;
+}
+@keyframes rsp{0%,100%{transform:translateY(0) rotate(0deg);opacity:0.45}50%{transform:translateY(-10px) rotate(14deg);opacity:0.85}}
+
+/* SHELF UNIT */
+#shelfUnit {
+  position:absolute;
+  left:16px; right:16px;
+  bottom:0; top:20px;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+  gap:0;
+  pointer-events:none;
+}
+
+/* SHELF ROW */
+.shelf-row { position:relative; pointer-events:none; }
+
+/* BACK PANEL per shelf */
+.shelf-back {
+  position:absolute;
+  inset:0;
+  background: linear-gradient(180deg,rgba(255,220,240,0.55) 0%,rgba(255,200,230,0.35) 100%);
+  border-left:5px solid #c26b8a;
+  border-right:5px solid #c26b8a;
+  pointer-events:none;
+  z-index:0;
+}
+
+/* SHELF BOARD */
+.shelf-board {
+  position:relative;
+  width:100%;
+  min-height:88px;
+  display:flex;
+  align-items:flex-end;
+  padding:6px 18px 16px;
+  gap:8px;
+  flex-wrap:wrap;
+  pointer-events:all;
+  z-index:2;
+  /* wood */
+  background:
+    repeating-linear-gradient(90deg,transparent 0,transparent 38px,rgba(0,0,0,0.025) 38px,rgba(0,0,0,0.025) 40px),
+    linear-gradient(180deg,#e8c49a 0%,#d4a574 35%,#c49060 65%,#b8834e 100%);
+  border-top: 7px solid #a0724a;
+  border-bottom: 7px solid #7c5430;
+  box-shadow:
+    inset 0 3px 0 rgba(255,255,255,0.22),
+    inset 0 -3px 5px rgba(0,0,0,0.14),
+    0 5px 14px rgba(0,0,0,0.28);
+  cursor:default;
+  transition:filter 0.2s;
+}
+.shelf-board.drag-over {
+  filter:brightness(1.18);
+  box-shadow:
+    inset 0 3px 0 rgba(255,255,255,0.35),
+    0 0 0 3px #f472b6,
+    0 5px 18px rgba(244,114,182,0.45);
+}
+/* empty label */
+.shelf-board::after {
+  content:attr(data-hint);
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.72rem; font-weight:800;
+  color:rgba(110,60,20,0.38);
+  pointer-events:none; letter-spacing:0.5px; text-transform:uppercase;
+}
+.shelf-board.has-items::after{opacity:0}
+
+/* shelf tag label */
+.shelf-tag {
+  position:absolute; top:-24px; left:12px;
+  background:#be185d; color:#fff;
+  font-size:0.6rem; font-weight:800;
+  padding:2px 10px; border-radius:7px 7px 0 0;
+  text-transform:uppercase; letter-spacing:0.4px;
+  white-space:nowrap; box-shadow:0 -2px 5px rgba(0,0,0,0.14);
+  z-index:5;
+}
+
+/* brackets */
+.shelf-bracket {
+  position:absolute; bottom:-7px;
+  width:13px; height:20px;
+  background:#7c5430; border-radius:0 0 4px 4px;
+  box-shadow:1px 2px 3px rgba(0,0,0,0.2);
+  z-index:3;
+}
+.shelf-bracket.l{left:22px} .shelf-bracket.r{right:22px}
+
+/* side pillars */
+.shelf-pillar-l, .shelf-pillar-r {
+  position:absolute; top:0; bottom:0;
+  width:14px;
+  background:linear-gradient(90deg,#a0724a,#c49060,#a0724a);
+  box-shadow:2px 0 8px rgba(0,0,0,0.2);
+  z-index:4;
+}
+.shelf-pillar-l{left:0} .shelf-pillar-r{right:0}
+
+/* PLACED ITEMS */
+.placed-item {
+  display:flex; flex-direction:column; align-items:center;
+  cursor:pointer; position:relative;
+  animation:popIn 0.32s cubic-bezier(.34,1.56,.64,1) forwards;
+  flex-shrink:0; z-index:5;
+}
+@keyframes popIn{from{transform:scale(0) translateY(18px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.placed-item:hover{transform:translateY(-5px);transition:transform 0.15s;}
+.placed-item .pe{font-size:clamp(1.8rem,3.5vw,2.4rem);line-height:1;filter:drop-shadow(0 3px 5px rgba(0,0,0,0.22));}
 .placed-item .pp{
   font-size:0.55rem;font-weight:900;
   color:#fff;background:#be185d;border-radius:5px;
