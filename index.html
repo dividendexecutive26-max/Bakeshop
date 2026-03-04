@@ -613,12 +613,10 @@ function buildSwatches() {
     sw.addEventListener('click', () => {
       colorState[selectedItemId][selectedPart] = color;
       updateSwatchActive();
-      // update the dot on the active part tab
       const activeTab = document.querySelector('.part-tab.active .tab-dot');
       if (activeTab) activeTab.style.background = color;
       refreshTrayItem(selectedItemId);
       refreshPreview();
-      refreshPlacedItems(selectedItemId);
     });
     row.appendChild(sw);
   });
@@ -731,10 +729,12 @@ function dropOn(shelf) {
 function placeItem(shelf, itemId) {
   shelf.classList.add('has-items');
   const item = ITEMS.find(i => i.id === itemId);
+  // Deep-copy the current color state so this placed item is frozen permanently
+  const frozenColors = {...colorState[itemId]};
   const placed = document.createElement('div');
   placed.className = 'placed-item';
   placed.dataset.itemid = itemId;
-  placed.innerHTML = item.svg(colorState[itemId]);
+  placed.innerHTML = item.svg(frozenColors);
 
   // Click to recolor with current selected part
   placed.addEventListener('click', () => {
