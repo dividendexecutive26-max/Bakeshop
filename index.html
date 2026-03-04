@@ -213,6 +213,40 @@ body { font-family: 'Nunito', sans-serif; background: #2d0a1e; min-height: 100vh
 .tray-item .te { font-size: 2.4rem; line-height: 1; }
 .tray-item .tn { font-size: 0.65rem; font-weight: 800; color: #f9a8d4; margin-top: 4px; text-align: center; }
 
+/* COLOR PICKER */
+#colorPickerArea { text-align: center; margin-bottom: 14px; }
+#colorPickerLabel { font-family: 'Pacifico', cursive; color: #f9c74f; font-size: 0.88rem; margin-bottom: 8px; display: block; text-shadow: 0 0 10px rgba(249,199,79,0.4); }
+#colorSwatches { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.swatch {
+  width: 34px; height: 34px; border-radius: 50%;
+  cursor: pointer; border: 3px solid transparent;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  position: relative;
+}
+.swatch:hover { transform: scale(1.18); }
+.swatch.active {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.5), 0 2px 10px rgba(0,0,0,0.4);
+  transform: scale(1.2);
+}
+.swatch.active::after {
+  content: '✓'; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 0.9rem; font-weight: 900;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+.swatch-none { background: linear-gradient(135deg, #444 45%, #fff 45%, #fff 55%, #444 55%); }
+
+/* Placed item color badge */
+.placed-item .pe-wrap {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  width: clamp(52px,7vw,68px); height: clamp(52px,7vw,68px);
+  border-radius: 50%;
+  transition: transform 0.15s;
+}
+.placed-item .pe-wrap.colored { box-shadow: 0 3px 10px rgba(0,0,0,0.25); }
+
 /* CONFETTI */
 .cfetti { position: fixed; top: -20px; pointer-events: none; z-index: 9999; animation: cfall linear forwards; border-radius: 2px; }
 @keyframes cfall { to { transform: translateY(105vh) rotate(700deg); opacity: 0; } }
@@ -266,6 +300,10 @@ body { font-family: 'Nunito', sans-serif; background: #2d0a1e; min-height: 100vh
 
   <div id="trayArea">
     <div id="trayTitle">🍩 Drag your treats onto the shelves! ✨</div>
+    <div id="colorPickerArea">
+      <span id="colorPickerLabel">🎨 Pick a color for your treats!</span>
+      <div id="colorSwatches"></div>
+    </div>
     <div id="itemTray"></div>
   </div>
 </div>
@@ -296,6 +334,42 @@ const SHELVES = [
 ];
 
 let dragData = null;
+let activeColor = null; // null = no background color
+
+const COLORS = [
+  {label:'None',   value:null,      cls:'swatch-none'},
+  {label:'Pink',   value:'#f9a8d4', cls:''},
+  {label:'Lilac',  value:'#d8b4fe', cls:''},
+  {label:'Peach',  value:'#fcd9b0', cls:''},
+  {label:'Mint',   value:'#a7f3d0', cls:''},
+  {label:'Sky',    value:'#bae6fd', cls:''},
+  {label:'Lemon',  value:'#fef08a', cls:''},
+  {label:'Coral',  value:'#fca5a5', cls:''},
+  {label:'Rose',   value:'#fda4af', cls:''},
+  {label:'Lavend', value:'#c4b5fd', cls:''},
+  {label:'Butter', value:'#fde68a', cls:''},
+  {label:'Sage',   value:'#bbf7d0', cls:''},
+  {label:'White',  value:'#ffffff', cls:''},
+  {label:'Gold',   value:'#f9c74f', cls:''},
+  {label:'Red',    value:'#f87171', cls:''},
+  {label:'Blue',   value:'#93c5fd', cls:''},
+];
+
+function buildColorSwatches() {
+  const container = document.getElementById('colorSwatches');
+  COLORS.forEach((c, i) => {
+    const sw = document.createElement('div');
+    sw.className = 'swatch' + (c.cls ? ' ' + c.cls : '') + (i === 0 ? ' active' : '');
+    if (c.value) sw.style.background = c.value;
+    sw.title = c.label;
+    sw.addEventListener('click', () => {
+      activeColor = c.value;
+      document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+      sw.classList.add('active');
+    });
+    container.appendChild(sw);
+  });
+}
 
 function buildShelves() {
   const unit = document.getElementById('shelfUnit');
@@ -360,7 +434,7 @@ function buildTray() {
     div.dataset.emoji = item.e;
     div.dataset.name = item.n;
     div.addEventListener('dragstart', e => {
-      dragData = {emoji: item.e, name: item.n};
+      dragData = {emoji: item.e, name: item.n, color: activeColor};
       e.dataTransfer.effectAllowed = 'copy';
     });
     div.addEventListener('touchstart', touchStart, {passive: true});
@@ -370,15 +444,40 @@ function buildTray() {
 
 function dropOn(shelf) {
   if (!dragData) return;
-  placeItem(shelf, dragData.emoji, dragData.name);
+  placeItem(shelf, dragData.emoji, dragData.name, dragData.color);
   dragData = null;
 }
 
-function placeItem(shelf, emoji, name) {
+function placeItem(shelf, emoji, name, color) {
   shelf.classList.add('has-items');
   const item = document.createElement('div');
   item.className = 'placed-item';
-  item.innerHTML = `<span class="pe">${emoji}</span><button class="prm" onclick="removeItem(this)">✕</button>`;
+  item.dataset.emoji = emoji;
+  item.dataset.name = name;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'pe-wrap' + (color ? ' colored' : '');
+  if (color) wrap.style.background = color;
+
+  const emojiSpan = document.createElement('span');
+  emojiSpan.className = 'pe';
+  emojiSpan.textContent = emoji;
+  wrap.appendChild(emojiSpan);
+
+  // Click placed item to recolor it
+  wrap.addEventListener('click', () => {
+    wrap.style.background = activeColor || '';
+    if (activeColor) wrap.classList.add('colored');
+    else wrap.classList.remove('colored');
+  });
+
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'prm';
+  removeBtn.textContent = '✕';
+  removeBtn.onclick = (e) => { e.stopPropagation(); removeItem(removeBtn); };
+
+  item.appendChild(wrap);
+  item.appendChild(removeBtn);
   shelf.appendChild(item);
 }
 
@@ -421,7 +520,7 @@ function celebrate() {
 let tData = null, tClone = null;
 function touchStart(e) {
   const src = e.currentTarget;
-  tData = {emoji: src.dataset.emoji, name: src.dataset.name};
+  tData = {emoji: src.dataset.emoji, name: src.dataset.name, color: activeColor};
   tClone = src.cloneNode(true);
   Object.assign(tClone.style, {position:'fixed',zIndex:'9999',opacity:'0.9',pointerEvents:'none',transform:'scale(1.2)'});
   document.body.appendChild(tClone);
@@ -449,13 +548,14 @@ function touchEnd(e) {
     s.classList.remove('drag-over');
     const r = s.getBoundingClientRect();
     if (t.clientX>=r.left && t.clientX<=r.right && t.clientY>=r.top && t.clientY<=r.bottom)
-      placeItem(s, tData.emoji, tData.name);
+      placeItem(s, tData.emoji, tData.name, tData.color);
   });
   tData = null;
 }
 
 buildShelves();
 buildTray();
+buildColorSwatches();
 </script>
 </body>
 </html>
